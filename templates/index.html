@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>geo · api</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        .geo-card {
+            transition: all 0.2s ease;
+            border: 1px solid #f0f0f0;
+        }
+        
+        .geo-card:hover {
+            border-color: #d0d0d0;
+            background-color: #fcfcfc;
+        }
+        
+        .dot-pulse {
+            width: 8px;
+            height: 8px;
+            background-color: #a3a3a3;
+            border-radius: 50%;
+            position: relative;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); background-color: #6b6b6b; }
+        }
+        
+        .map-grid {
+            background-image: 
+                linear-gradient(#e5e5e5 1px, transparent 1px),
+                linear-gradient(90deg, #e5e5e5 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        
+        .input-minimal {
+            border-bottom: 1px solid #e5e5e5;
+            transition: border-color 0.2s;
+        }
+        
+        .input-minimal:focus {
+            border-bottom-color: #6b6b6b;
+            outline: none;
+        }
+    </style>
+</head>
+<body class="bg-white text-[#2b2b2b] antialiased">
+
+    <!-- Header simplificado -->
+    <header class="border-b border-[#efefef] py-5 px-6 md:px-10">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fa-regular fa-circle-dot text-xl text-[#6b6b6b]"></i>
+                <span class="text-sm font-medium tracking-wide text-[#4a4a4a]">geo<span class="font-light">/api</span></span>
+            </div>
+            
+            <nav class="hidden md:flex items-center gap-8 text-sm">
+                <a href="#inicio" class="text-[#6b6b6b] hover:text-[#2b2b2b] transition-colors">inicio</a>
+                <a href="#documentacion" class="text-[#6b6b6b] hover:text-[#2b2b2b] transition-colors">documentación</a>
+                <a href="#playground" class="text-[#6b6b6b] hover:text-[#2b2b2b] transition-colors">playground</a>
+                <a href="#crear-empleado" class="text-[#6b6b6b] hover:text-[#2b2b2b] transition-colors">empleados</a>
+                <a href="#crear-direccion" class="text-[#6b6b6b] hover:text-[#2b2b2b] transition-colors">direcciones</a>
+                <a href="#console" class="text-[#6b6b6b] hover:text-[#2b2b2b] transition-colors">console</a>
+            </nav>
+            
+            <div class="flex items-center gap-4">
+                <button class="text-sm text-[#6b6b6b] hover:text-[#2b2b2b] transition-colors hidden sm:block">acceso</button>
+                <button class="bg-[#2b2b2b] text-white text-sm px-4 py-2 rounded-md hover:bg-[#404040] transition-colors">
+                    registro
+                </button>
+                <button class="md:hidden text-xl text-[#6b6b6b]" id="menuBtn">
+                    <i class="fa-regular fa-bars"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Menú móvil -->
+        <div class="md:hidden hidden px-6 pt-6 pb-3 border-t border-[#efefef] mt-4" id="mobileMenu">
+            <div class="flex flex-col gap-4 text-sm">
+                <a href="#inicio" class="text-[#6b6b6b] hover:text-[#2b2b2b] py-1">inicio</a>
+                <a href="#documentacion" class="text-[#6b6b6b] hover:text-[#2b2b2b] py-1">documentación</a>
+                <a href="#playground" class="text-[#6b6b6b] hover:text-[#2b2b2b] py-1">playground</a>
+                <a href="#crear-empleado" class="text-[#6b6b6b] hover:text-[#2b2b2b] py-1">empleados</a>
+                <a href="#crear-direccion" class="text-[#6b6b6b] hover:text-[#2b2b2b] py-1">direcciones</a>
+                <a href="#console" class="text-[#6b6b6b] hover:text-[#2b2b2b] py-1">console</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero minimal -->
+    <section id="inicio" class="py-20 md:py-28 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="max-w-3xl mx-auto text-center">
+                <span class="text-xs uppercase tracking-[0.2em] text-[#a3a3a3]">geolocation api</span>
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-light leading-tight mt-6 text-[#2b2b2b]">
+                    coordenadas, <br>lugares y contexto
+                </h1>
+                <p class="text-lg text-[#6b6b6b] mt-6 max-w-2xl mx-auto">
+                    Una API simple pero poderosa para convertir direcciones en coordenadas, calcular distancias y explorar ubicaciones.
+                </p>
+                
+                <!-- Input de prueba rápida -->
+                <div class="mt-12 max-w-xl mx-auto">
+                    <div class="flex items-center border border-[#e5e5e5] rounded-md overflow-hidden bg-white">
+                        <input type="text" placeholder="Ej: empleados, direcciones" class="flex-1 px-5 py-3 text-sm focus:outline-none" id="geoInput">
+                        <button class="px-5 py-3 bg-[#f5f5f5] text-[#6b6b6b] hover:text-[#2b2b2b] border-l border-[#e5e5e5] transition-colors" id="geoSearchBtn">
+                            <i class="fa-regular fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                    <div class="text-xs text-[#a3a3a3] mt-3 flex items-center justify-center gap-4">
+                        <span><i class="fa-regular fa-location-dot mr-1"></i> /api-luis/</span>
+                        <span><i class="fa-regular fa-building mr-1"></i> 2 recursos activos</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Resultado rápido -->
+            <div id="quickResult" class="mt-8 text-center text-sm text-[#6b6b6b] min-h-[40px]"></div>
+            
+            <!-- Badges de ejemplos -->
+            <div class="flex flex-wrap justify-center gap-3 mt-10 text-xs">
+                <button class="example-chip px-4 py-2 border border-[#e5e5e5] rounded-full text-[#6b6b6b] hover:border-[#a3a3a3] transition-colors" data-example="empleados">
+                    empleados
+                </button>
+                <button class="example-chip px-4 py-2 border border-[#e5e5e5] rounded-full text-[#6b6b6b] hover:border-[#a3a3a3] transition-colors" data-example="direcciones">
+                    direcciones
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Playground / Consola minimal -->
+    <section id="playground" class="py-16 px-6 bg-[#fafafa] border-y border-[#efefef]">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center gap-2 mb-8">
+                <i class="fa-regular fa-terminal text-sm text-[#a3a3a3]"></i>
+                <span class="text-xs uppercase tracking-wider text-[#a3a3a3]">playground · respuesta en vivo</span>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Panel izquierdo: controles -->
+                <div>
+                    <div class="mb-6">
+                        <label class="text-xs text-[#a3a3a3] block mb-2">endpoint</label>
+                        <div class="flex items-center text-sm border border-[#e5e5e5] rounded-md overflow-hidden bg-white">
+                            <span class="px-4 py-3 bg-[#f5f5f5] text-[#6b6b6b] border-r border-[#e5e5e5]">GET</span>
+                            <span class="px-4 py-3 text-[#2b2b2b] font-mono text-xs" id="endpointDisplay">/api-luis/empleados/</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="text-xs text-[#a3a3a3] block mb-2">recurso</label>
+                        <div class="space-y-3">
+                            <select class="w-full px-4 py-3 text-sm border border-[#e5e5e5] rounded-md focus:outline-none focus:border-[#a3a3a3] bg-white text-[#2b2b2b] font-mono" id="paramQ">
+                                <option value="/api-luis/empleados/">/api-luis/empleados/</option>
+                                <option value="/api-luis/direcciones/">/api-luis/direcciones/</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button class="bg-[#2b2b2b] text-white px-5 py-3 text-sm rounded-md hover:bg-[#404040] transition-colors flex-1" id="executeBtn">
+                            <i class="fa-regular fa-play mr-2"></i>ejecutar
+                        </button>
+                        <button class="border border-[#e5e5e5] px-4 py-3 text-sm rounded-md hover:bg-[#f5f5f5] transition-colors" id="clearBtn">
+                            <i class="fa-regular fa-rotate-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Panel derecho: respuesta JSON -->
+                <div class="bg-white border border-[#efefef] rounded-md p-5 font-mono text-xs">
+                    <div class="flex items-center justify-between mb-3 text-[#a3a3a3]">
+                        <span>respuesta.json</span>
+                        <i class="fa-regular fa-copy hover:text-[#2b2b2b] cursor-pointer" id="copyBtn"></i>
+                    </div>
+                    <pre id="jsonResponse" class="text-[#6b6b6b] overflow-x-auto whitespace-pre-wrap">{
+  "lat": 40.4168,
+  "lng": -3.7038,
+  "display_name": "Plaza Mayor, Madrid, España",
+  "type": "plaza",
+  "bounding_box": [40.4165, -3.7040, 40.4170, -3.7035]
+}</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Grid de características / documentación rápida -->
+    <section id="documentacion" class="py-20 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="text-xs uppercase tracking-[0.2em] text-[#a3a3a3]">documentación</span>
+                <h2 class="text-3xl font-light mt-3 text-[#2b2b2b]">recursos de la api</h2>
+            </div>
+            
+            <div class="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                <a href="#crear-empleado" class="geo-card p-6 rounded-md block">
+                    <i class="fa-regular fa-user text-xl text-[#6b6b6b] mb-4"></i>
+                    <h3 class="font-medium mb-2 text-[#2b2b2b]">empleados</h3>
+                    <p class="text-xs text-[#6b6b6b] leading-relaxed">Lista, crea y gestiona empleados con nombre completo y puesto.</p>
+                    <span class="text-xs text-[#a3a3a3] block mt-4 font-mono">/api-luis/empleados/</span>
+                </a>
+                <a href="#crear-direccion" class="geo-card p-6 rounded-md block">
+                    <i class="fa-regular fa-map-location-dot text-xl text-[#6b6b6b] mb-4"></i>
+                    <h3 class="font-medium mb-2 text-[#2b2b2b]">direcciones</h3>
+                    <p class="text-xs text-[#6b6b6b] leading-relaxed">Registra coordenadas de empleados con geocodificación inversa automática.</p>
+                    <span class="text-xs text-[#a3a3a3] block mt-4 font-mono">/api-luis/direcciones/</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Crear Empleado -->
+    <section id="crear-empleado" class="py-16 px-6 bg-[#fafafa] border-y border-[#efefef]">
+        <div class="max-w-5xl mx-auto">
+            <div class="flex items-center gap-2 mb-8">
+                <i class="fa-regular fa-user-plus text-sm text-[#a3a3a3]"></i>
+                <span class="text-xs uppercase tracking-wider text-[#a3a3a3]">nuevo empleado · POST /api-luis/empleados/</span>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Formulario -->
+                <div>
+                    <div class="mb-5">
+                        <label class="text-xs text-[#a3a3a3] block mb-2">nombre completo</label>
+                        <input type="text" id="empNombre" placeholder="Ej: José Miguel Robles"
+                            class="w-full px-4 py-3 text-sm border border-[#e5e5e5] rounded-md focus:outline-none focus:border-[#a3a3a3] bg-white">
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-xs text-[#a3a3a3] block mb-2">puesto</label>
+                        <input type="text" id="empPuesto" placeholder="Ej: IT, RH, Gerencia"
+                            class="w-full px-4 py-3 text-sm border border-[#e5e5e5] rounded-md focus:outline-none focus:border-[#a3a3a3] bg-white">
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button id="crearEmpleadoBtn"
+                            class="bg-[#2b2b2b] text-white px-5 py-3 text-sm rounded-md hover:bg-[#404040] transition-colors">
+                            <i class="fa-regular fa-plus mr-2"></i>crear empleado
+                        </button>
+                        <span id="empFeedback" class="text-xs"></span>
+                    </div>
+                </div>
+                <!-- Respuesta JSON -->
+                <div class="bg-white border border-[#efefef] rounded-md p-5 font-mono text-xs">
+                    <div class="text-[#a3a3a3] mb-3">respuesta.json</div>
+                    <pre id="empResponse" class="text-[#6b6b6b] overflow-x-auto whitespace-pre-wrap">// aquí aparecerá el empleado creado</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Crear Dirección -->
+    <section id="crear-direccion" class="py-16 px-6">
+        <div class="max-w-5xl mx-auto">
+            <div class="flex items-center gap-2 mb-8">
+                <i class="fa-regular fa-location-dot text-sm text-[#a3a3a3]"></i>
+                <span class="text-xs uppercase tracking-wider text-[#a3a3a3]">nueva dirección · POST /api-luis/direcciones/</span>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Formulario -->
+                <div>
+                    <div class="mb-5">
+                        <label class="text-xs text-[#a3a3a3] block mb-2">empleado</label>
+                        <div class="flex gap-2">
+                            <select id="dirEmpleado"
+                                class="flex-1 px-4 py-3 text-sm border border-[#e5e5e5] rounded-md focus:outline-none focus:border-[#a3a3a3] bg-white text-[#6b6b6b]">
+                                <option value="">cargando empleados…</option>
+                            </select>
+                            <button id="refreshEmpleadosBtn" title="Recargar empleados"
+                                class="px-3 border border-[#e5e5e5] rounded-md hover:bg-[#f5f5f5] transition-colors text-[#a3a3a3] hover:text-[#2b2b2b]">
+                                <i class="fa-regular fa-rotate-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-5">
+                        <label class="text-xs text-[#a3a3a3] block mb-2">latitud</label>
+                        <input type="text" id="dirLat" placeholder="Ej: 40.4168"
+                            class="w-full px-4 py-3 text-sm border border-[#e5e5e5] rounded-md focus:outline-none focus:border-[#a3a3a3] bg-white">
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-xs text-[#a3a3a3] block mb-2">longitud</label>
+                        <input type="text" id="dirLon" placeholder="Ej: -3.7038"
+                            class="w-full px-4 py-3 text-sm border border-[#e5e5e5] rounded-md focus:outline-none focus:border-[#a3a3a3] bg-white">
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button id="crearDireccionBtn"
+                            class="bg-[#2b2b2b] text-white px-5 py-3 text-sm rounded-md hover:bg-[#404040] transition-colors">
+                            <i class="fa-regular fa-plus mr-2"></i>crear dirección
+                        </button>
+                        <span id="dirFeedback" class="text-xs"></span>
+                    </div>
+                </div>
+                <!-- Respuesta JSON -->
+                <div class="bg-white border border-[#efefef] rounded-md p-5 font-mono text-xs">
+                    <div class="text-[#a3a3a3] mb-3">respuesta.json</div>
+                    <pre id="dirResponse" class="text-[#6b6b6b] overflow-x-auto whitespace-pre-wrap">// aquí aparecerá la dirección creada&#10;// (con geocodificación inversa automática)</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mapa real -->
+    <section id="mapa" class="py-10 px-6">
+        <div class="max-w-5xl mx-auto">
+            <div class="border border-[#efefef] rounded-md overflow-hidden bg-white">
+                <div class="p-4 border-b border-[#efefef] flex items-center justify-between text-xs text-[#a3a3a3]">
+                    <span><i class="fa-regular fa-map mr-2"></i>vista de mapa · direcciones reales</span>
+                    <span class="flex items-center gap-3">
+                        <span class="flex items-center gap-1"><span class="dot-pulse"></span> activo</span>
+                        <span class="w-px h-3 bg-[#efefef]"></span>
+                        <button id="refreshMapBtn" class="text-[#a3a3a3] hover:text-[#2b2b2b] transition-colors">actualizar</button>
+                    </span>
+                </div>
+                <div id="liveMap" class="h-80 w-full bg-[#fcfcfc]"></div>
+                <div class="p-3 border-t border-[#efefef] text-xs text-[#a3a3a3]">
+                    <span id="mapStatus">cargando direcciones...</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Consola / logs -->
+    <section id="console" class="py-16 px-6">
+        <div class="max-w-5xl mx-auto">
+            <div class="border border-[#efefef] rounded-md bg-[#fafafa]">
+                <div class="p-4 border-b border-[#efefef] flex items-center justify-between">
+                    <span class="text-xs text-[#a3a3a3]"><i class="fa-regular fa-terminal mr-2"></i>últimas consultas</span>
+                    <span class="text-xs text-[#a3a3a3]">tiempo real · streaming</span>
+                </div>
+                <div class="p-4 font-mono text-xs space-y-2" id="logContainer">
+                    <div class="text-[#6b6b6b]"><span class="text-[#a3a3a3]">[14:32:01]</span> GET /geocode?q=plaza mayor → 200 124ms</div>
+                    <div class="text-[#6b6b6b]"><span class="text-[#a3a3a3]">[14:28:17]</span> GET /reverse?lat=40.41&lon=-3.70 → 200 98ms</div>
+                    <div class="text-[#6b6b6b]"><span class="text-[#a3a3a3]">[14:22:44]</span> GET /distance?from=40.41,-3.70&to=41.38,2.17 → 200 210ms</div>
+                </div>
+                <div class="p-3 border-t border-[#efefef] text-right">
+                    <button class="text-xs text-[#a3a3a3] hover:text-[#2b2b2b] transition-colors" id="clearLogs">
+                        limpiar historial
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer ultra simple -->
+    <footer class="border-t border-[#efefef] py-8 px-6 text-xs text-[#a3a3a3]">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>geo/api · documentación interactiva</div>
+            <div class="flex gap-6">
+                <a href="#" class="hover:text-[#6b6b6b]">github</a>
+                <a href="#" class="hover:text-[#6b6b6b]">status</a>
+                <a href="#" class="hover:text-[#6b6b6b]">terms</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        (function() {
+            // Elementos
+            const menuBtn = document.getElementById('menuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const geoInput = document.getElementById('geoInput');
+            const geoSearchBtn = document.getElementById('geoSearchBtn');
+            const quickResult = document.getElementById('quickResult');
+            const executeBtn = document.getElementById('executeBtn');
+            const paramQ = document.getElementById('paramQ');
+            const endpointDisplay = document.getElementById('endpointDisplay');
+            const jsonResponse = document.getElementById('jsonResponse');
+            const clearBtn = document.getElementById('clearBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const logContainer = document.getElementById('logContainer');
+            const clearLogs = document.getElementById('clearLogs');
+            const refreshMapBtn = document.getElementById('refreshMapBtn');
+            const mapStatus = document.getElementById('mapStatus');
+
+            const empleadoLookup = {};
+            let mapInstance = null;
+            let mapMarkersLayer = null;
+
+            const ENDPOINTS = {
+                'empleados': '/api-luis/empleados/',
+                'direcciones': '/api-luis/direcciones/',
+            };
+
+            function addLog(endpoint, status, ms) {
+                const now = new Date();
+                const timeStr = `[${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}]`;
+                const logEntry = document.createElement('div');
+                logEntry.className = 'text-[#6b6b6b]';
+                logEntry.innerHTML = `<span class="text-[#a3a3a3]">${timeStr}</span> GET ${endpoint} → ${status} ${ms}ms`;
+                logContainer.prepend(logEntry);
+                while (logContainer.children.length > 6) {
+                    logContainer.removeChild(logContainer.lastElementChild);
+                }
+            }
+
+            async function fetchEndpoint(endpoint) {
+                jsonResponse.innerText = '{\n  "cargando": true\n}';
+                quickResult.innerHTML = '<span class="text-xs text-[#a3a3a3]">consultando API…</span>';
+                const t0 = performance.now();
+                try {
+                    const res = await fetch(endpoint, { headers: { 'Accept': 'application/json' } });
+                    const ms = Math.round(performance.now() - t0);
+                    const data = await res.json();
+                    jsonResponse.innerText = JSON.stringify(data, null, 2);
+                    addLog(endpoint, res.status, ms);
+                    const count = Array.isArray(data) ? data.length : (data.count !== undefined ? data.count : '—');
+                    quickResult.innerHTML = `<span class="text-xs text-[#6b6b6b]"><i class="fa-regular fa-circle-check mr-1 text-[#a3a3a3]"></i>estado: ${res.status} · ${count} registro(s)</span>`;
+                } catch (err) {
+                    const ms = Math.round(performance.now() - t0);
+                    jsonResponse.innerText = JSON.stringify({ error: err.message }, null, 2);
+                    quickResult.innerHTML = `<span class="text-xs text-red-400"><i class="fa-regular fa-circle-xmark mr-1"></i>error: ${err.message}</span>`;
+                    addLog(endpoint, 'ERR', ms);
+                }
+            }
+
+            function normalizeList(payload) {
+                return Array.isArray(payload) ? payload : (payload.results || []);
+            }
+
+            function escapeHtml(value) {
+                return String(value)
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            function initMap() {
+                if (!window.L) {
+                    mapStatus.textContent = 'Leaflet no cargó correctamente';
+                    return;
+                }
+                mapInstance = L.map('liveMap').setView([20, 0], 2);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors',
+                }).addTo(mapInstance);
+                mapMarkersLayer = L.layerGroup().addTo(mapInstance);
+            }
+
+            async function refreshMap() {
+                if (!mapInstance || !mapMarkersLayer) {
+                    return;
+                }
+                mapStatus.textContent = 'actualizando mapa...';
+                try {
+                    const res = await fetch('/api-luis/direcciones/', { headers: { 'Accept': 'application/json' } });
+                    const data = await res.json();
+                    const direcciones = normalizeList(data);
+
+                    mapMarkersLayer.clearLayers();
+                    const points = [];
+
+                    direcciones.forEach(dir => {
+                        const lat = Number.parseFloat(dir.latitud);
+                        const lon = Number.parseFloat(dir.longitud);
+                        if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+                            return;
+                        }
+                        const empleadoRef = dir.empleado || 'empleado';
+                        const empleadoLabel = empleadoLookup[empleadoRef] || empleadoRef;
+
+                        L.marker([lat, lon])
+                            .bindPopup(`<strong>${escapeHtml(empleadoLabel)}</strong><br>Lat: ${lat}<br>Lon: ${lon}`)
+                            .addTo(mapMarkersLayer);
+
+                        points.push([lat, lon]);
+                    });
+
+                    if (points.length > 0) {
+                        mapInstance.fitBounds(L.latLngBounds(points), { padding: [30, 30] });
+                        mapStatus.textContent = `${points.length} punto(s) cargados`;
+                    } else {
+                        mapInstance.setView([20, 0], 2);
+                        mapStatus.textContent = 'sin coordenadas válidas para mostrar';
+                    }
+                } catch (e) {
+                    mapStatus.textContent = `error de mapa: ${e.message}`;
+                }
+            }
+
+            refreshMapBtn.addEventListener('click', refreshMap);
+
+            // Sincronizar el display del endpoint con el selector del playground
+            paramQ.addEventListener('change', () => {
+                endpointDisplay.textContent = paramQ.value;
+            });
+
+            // Búsqueda en el hero
+            function performSearch() {
+                const query = geoInput.value.trim().toLowerCase();
+                const endpoint = ENDPOINTS[query] || ENDPOINTS['empleados'];
+                fetchEndpoint(endpoint);
+            }
+
+            geoSearchBtn.addEventListener('click', performSearch);
+            geoInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch();
+            });
+
+            // Chips de ejemplo
+            document.querySelectorAll('.example-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const key = chip.getAttribute('data-example');
+                    geoInput.value = key;
+                    const endpoint = ENDPOINTS[key] || ENDPOINTS['empleados'];
+                    fetchEndpoint(endpoint);
+                });
+            });
+
+            // Botón ejecutar del playground
+            executeBtn.addEventListener('click', () => {
+                const endpoint = paramQ.value;
+                endpointDisplay.textContent = endpoint;
+                fetchEndpoint(endpoint);
+            });
+
+            // Botón limpiar / reset
+            clearBtn.addEventListener('click', () => {
+                paramQ.value = '/api-luis/empleados/';
+                endpointDisplay.textContent = '/api-luis/empleados/';
+                jsonResponse.innerText = '{\n  // ejecuta una consulta para ver resultados\n}';
+                quickResult.innerHTML = '';
+            });
+
+            // Copiar JSON
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard?.writeText(jsonResponse.innerText).then(() => {
+                    const originalHtml = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fa-regular fa-check"></i>';
+                    setTimeout(() => { copyBtn.innerHTML = originalHtml; }, 1000);
+                });
+            });
+
+            // Limpiar logs
+            clearLogs.addEventListener('click', () => {
+                logContainer.innerHTML = '<div class="text-[#a3a3a3] text-xs italic">historial limpiado</div>';
+            });
+
+            // Menú móvil
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Cerrar móvil al hacer clic en enlace
+            document.querySelectorAll('#mobileMenu a').forEach(link => {
+                link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+            });
+
+            // Smooth scroll para anclas
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) target.scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+
+            // Carga inicial: consultar empleados al abrir la página
+            fetchEndpoint(ENDPOINTS['empleados']);
+
+            // ── CSRF helper ──────────────────────────────────────────────────────────────
+            function getCsrfToken() {
+                const match = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('csrftoken='));
+                return match ? decodeURIComponent(match.split('=')[1]) : '';
+            }
+
+            async function postData(endpoint, payload) {
+                const t0 = performance.now();
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRFToken': getCsrfToken(),
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const ms = Math.round(performance.now() - t0);
+                const data = await res.json();
+                return { res, data, ms };
+            }
+
+            // ── Cargar empleados en el select de dirección ───────────────────────────────
+            async function loadEmpleadosSelect() {
+                const sel = document.getElementById('dirEmpleado');
+                try {
+                    const res = await fetch('/api-luis/empleados/', { headers: { 'Accept': 'application/json' } });
+                    const lista = await res.json();
+                    const arr = normalizeList(lista);
+                    sel.innerHTML = '<option value="">— selecciona un empleado —</option>';
+                    Object.keys(empleadoLookup).forEach(key => delete empleadoLookup[key]);
+                    arr.forEach(emp => {
+                        const opt = document.createElement('option');
+                        opt.value = emp.url;
+                        opt.textContent = `${emp.nombre_completo} · ${emp.puesto}`;
+                        sel.appendChild(opt);
+                        empleadoLookup[emp.url] = `${emp.nombre_completo} · ${emp.puesto}`;
+                    });
+                } catch {
+                    sel.innerHTML = '<option value="">error al cargar empleados</option>';
+                }
+            }
+
+            document.getElementById('refreshEmpleadosBtn').addEventListener('click', loadEmpleadosSelect);
+
+            // ── Crear empleado ───────────────────────────────────────────────────────────
+            document.getElementById('crearEmpleadoBtn').addEventListener('click', async () => {
+                const nombre = document.getElementById('empNombre').value.trim();
+                const puesto = document.getElementById('empPuesto').value.trim();
+                const feedback = document.getElementById('empFeedback');
+                const resp = document.getElementById('empResponse');
+
+                if (!nombre || !puesto) {
+                    feedback.className = 'text-xs text-red-400';
+                    feedback.textContent = 'completa todos los campos';
+                    return;
+                }
+                feedback.className = 'text-xs text-[#a3a3a3]';
+                feedback.textContent = 'enviando…';
+
+                try {
+                    const { res, data, ms } = await postData('/api-luis/empleados/', { nombre_completo: nombre, puesto });
+                    resp.textContent = JSON.stringify(data, null, 2);
+                    addLog('/api-luis/empleados/', res.status, ms);
+                    if (res.ok) {
+                        feedback.className = 'text-xs text-green-600';
+                        feedback.textContent = '✓ empleado creado';
+                        document.getElementById('empNombre').value = '';
+                        document.getElementById('empPuesto').value = '';
+                        await loadEmpleadosSelect();
+                    } else {
+                        feedback.className = 'text-xs text-red-400';
+                        feedback.textContent = `error ${res.status}`;
+                    }
+                } catch (e) {
+                    feedback.className = 'text-xs text-red-400';
+                    feedback.textContent = `error: ${e.message}`;
+                    resp.textContent = JSON.stringify({ error: e.message }, null, 2);
+                }
+            });
+
+            // ── Crear dirección ──────────────────────────────────────────────────────────
+            document.getElementById('crearDireccionBtn').addEventListener('click', async () => {
+                const empleadoUrl = document.getElementById('dirEmpleado').value;
+                const lat = document.getElementById('dirLat').value.trim();
+                const lon = document.getElementById('dirLon').value.trim();
+                const feedback = document.getElementById('dirFeedback');
+                const resp = document.getElementById('dirResponse');
+
+                if (!empleadoUrl || !lat || !lon) {
+                    feedback.className = 'text-xs text-red-400';
+                    feedback.textContent = 'completa todos los campos';
+                    return;
+                }
+                feedback.className = 'text-xs text-[#a3a3a3]';
+                feedback.textContent = 'enviando…';
+
+                try {
+                    const { res, data, ms } = await postData('/api-luis/direcciones/', {
+                        empleado: empleadoUrl,
+                        latitud: lat,
+                        longitud: lon,
+                    });
+                    resp.textContent = JSON.stringify(data, null, 2);
+                    addLog('/api-luis/direcciones/', res.status, ms);
+                    if (res.ok) {
+                        feedback.className = 'text-xs text-green-600';
+                        feedback.textContent = '✓ dirección creada (geocodificación automática)';
+                        document.getElementById('dirLat').value = '';
+                        document.getElementById('dirLon').value = '';
+                        refreshMap();
+                    } else {
+                        feedback.className = 'text-xs text-red-400';
+                        feedback.textContent = `error ${res.status}`;
+                    }
+                } catch (e) {
+                    feedback.className = 'text-xs text-red-400';
+                    feedback.textContent = `error: ${e.message}`;
+                    resp.textContent = JSON.stringify({ error: e.message }, null, 2);
+                }
+            });
+
+            // Cargar empleados y mapa al inicio
+            initMap();
+            loadEmpleadosSelect().then(() => refreshMap());
+        })();
+    </script>
+</body>
+</html>
