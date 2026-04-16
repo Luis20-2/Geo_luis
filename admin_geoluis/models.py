@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from Herramientas.get_direccion_mike import get_direccion_mikecore
+from Herramientas.get_direccion_luis import get_direccion_luiscore
 
 class Empleado(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -23,5 +23,5 @@ class Direccion(models.Model):
         return f"{self.empleado.nombre_completo}"
 
     def save(self, *args, **kwargs):
-        self.direccion_completa = get_direccion_mikecore(self.latitud, self.longitud)
+        self.direccion_completa = get_direccion_luiscore(self.latitud, self.longitud)
         super().save(*args, **kwargs)

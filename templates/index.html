@@ -120,7 +120,7 @@
                 <!-- Input de prueba rápida -->
                 <div class="mt-12 max-w-xl mx-auto">
                     <div class="flex items-center border border-[#e5e5e5] rounded-md overflow-hidden bg-white">
-                        <input type="text" placeholder="Ej: empleados, direcciones" class="flex-1 px-5 py-3 text-sm focus:outline-none" id="geoInput">
+                        <input type="text" placeholder="Ej: empleados, direcciones, jose, RH" class="flex-1 px-5 py-3 text-sm focus:outline-none" id="geoInput">
                         <button class="px-5 py-3 bg-[#f5f5f5] text-[#6b6b6b] hover:text-[#2b2b2b] border-l border-[#e5e5e5] transition-colors" id="geoSearchBtn">
                             <i class="fa-regular fa-magnifying-glass"></i>
                         </button>
@@ -134,7 +134,39 @@
             
             <!-- Resultado rápido -->
             <div id="quickResult" class="mt-8 text-center text-sm text-[#6b6b6b] min-h-[40px]"></div>
-            
+
+            <!-- Login JWT -->
+            <div id="loginCard" class="hidden mt-10 max-w-3xl mx-auto bg-[#fafafa] border border-[#efefef] rounded-xl p-6 text-left">
+                <div class="flex items-center justify-between gap-4 mb-4">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-[#a3a3a3]">autenticación jwt</p>
+                        <h3 class="text-xl font-medium text-[#2b2b2b] mt-1">inicio de sesión seguro</h3>
+                    </div>
+                    <span id="loginStatus" class="text-xs text-[#a3a3a3]">sin sesión</span>
+                </div>
+                <div class="grid md:grid-cols-3 gap-3">
+                    <input type="text" id="jwtUsername" placeholder="usuario"
+                        class="w-full px-4 py-3 text-sm border border-[#e5e5e5] rounded-md focus:outline-none focus:border-[#a3a3a3] bg-white">
+                    <input type="password" id="jwtPassword" placeholder="contraseña"
+                        class="w-full px-4 py-3 text-sm border border-[#e5e5e5] rounded-md focus:outline-none focus:border-[#a3a3a3] bg-white">
+                    <div class="flex gap-2">
+                        <button id="jwtLoginBtn" class="flex-1 bg-[#2b2b2b] text-white px-4 py-3 text-sm rounded-md hover:bg-[#404040] transition-colors">
+                            iniciar sesión
+                        </button>
+                        <button id="jwtLogoutBtn" class="px-4 py-3 text-sm rounded-md border border-[#e5e5e5] hover:bg-white transition-colors">
+                            salir
+                        </button>
+                    </div>
+                </div>
+                <p id="jwtUser" class="text-sm text-[#6b6b6b] mt-4">No autenticado</p>
+                <pre id="tokenPreview" class="mt-3 bg-white border border-[#efefef] rounded-md p-3 text-[11px] text-[#6b6b6b] overflow-x-auto whitespace-pre-wrap">Inicia sesión para ver tu token JWT.</pre>
+            </div>
+
+            <div id="guestHint" class="hidden mt-6 text-center text-sm text-[#a3a3a3]">
+                Inicia sesión para mostrar playground, documentación, formularios y mapa.
+            </div>
+
+            <div id="protectedContent" class="hidden">
             <!-- Badges de ejemplos -->
             <div class="flex flex-wrap justify-center gap-3 mt-10 text-xs">
                 <button class="example-chip px-4 py-2 border border-[#e5e5e5] rounded-full text-[#6b6b6b] hover:border-[#a3a3a3] transition-colors" data-example="empleados">
@@ -360,6 +392,8 @@
         </div>
     </section>
 
+    </div>
+
     <!-- Footer ultra simple -->
     <footer class="border-t border-[#efefef] py-8 px-6 text-xs text-[#a3a3a3]">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
@@ -391,15 +425,117 @@
             const clearLogs = document.getElementById('clearLogs');
             const refreshMapBtn = document.getElementById('refreshMapBtn');
             const mapStatus = document.getElementById('mapStatus');
+            const jwtUsername = document.getElementById('jwtUsername');
+            const jwtPassword = document.getElementById('jwtPassword');
+            const jwtLoginBtn = document.getElementById('jwtLoginBtn');
+            const jwtLogoutBtn = document.getElementById('jwtLogoutBtn');
+            const loginStatus = document.getElementById('loginStatus');
+            const jwtUser = document.getElementById('jwtUser');
+            const tokenPreview = document.getElementById('tokenPreview');
+            const loginCard = document.getElementById('loginCard');
+            const protectedContent = document.getElementById('protectedContent');
+            const guestHint = document.getElementById('guestHint');
 
             const empleadoLookup = {};
             let mapInstance = null;
             let mapMarkersLayer = null;
+            let appInitialized = false;
 
             const ENDPOINTS = {
                 'empleados': '/api-luis/empleados/',
                 'direcciones': '/api-luis/direcciones/',
             };
+
+            function getAccessToken() {
+                return localStorage.getItem('geo_jwt_access') || '';
+            }
+
+            function getAuthHeaders() {
+                const token = getAccessToken();
+                return token ? { 'Authorization': `Bearer ${token}` } : {};
+            }
+
+            function initializeProtectedApp() {
+                if (appInitialized) {
+                    return;
+                }
+
+                fetchEndpoint(ENDPOINTS['empleados']);
+                initMap();
+                loadEmpleadosSelect().then(() => refreshMap());
+                appInitialized = true;
+            }
+
+            function updateAuthUi() {
+                const username = localStorage.getItem('geo_jwt_user');
+                const token = getAccessToken();
+
+                if (username && token) {
+                    loginStatus.textContent = 'sesión activa';
+                    loginStatus.className = 'text-xs text-green-600';
+                    jwtUser.textContent = `Usuario autenticado: ${username}`;
+                    tokenPreview.textContent = `${token.slice(0, 80)}...`;
+                    loginCard.classList.add('hidden');
+                    protectedContent.classList.remove('hidden');
+                    guestHint.classList.add('hidden');
+                    initializeProtectedApp();
+                } else {
+                    window.location.href = '/';
+                }
+            }
+
+            async function loginWithJwt() {
+                const username = jwtUsername.value.trim();
+                const password = jwtPassword.value.trim();
+
+                if (!username || !password) {
+                    loginStatus.textContent = 'faltan credenciales';
+                    loginStatus.className = 'text-xs text-red-500';
+                    return;
+                }
+
+                loginStatus.textContent = 'autenticando...';
+                loginStatus.className = 'text-xs text-[#a3a3a3]';
+
+                try {
+                    const res = await fetch('/api/jwt/login/', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRFToken': getCsrfToken(),
+                        },
+                        body: JSON.stringify({ username, password }),
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data.error || data.detail || `Error ${res.status}`);
+                    }
+
+                    localStorage.setItem('geo_jwt_access', data.access);
+                    localStorage.setItem('geo_jwt_refresh', data.refresh);
+                    localStorage.setItem('geo_jwt_user', data.username);
+                    jwtPassword.value = '';
+                    updateAuthUi();
+                    quickResult.innerHTML = '<span class="text-xs text-green-600">JWT listo para usar en POST, PUT y DELETE.</span>';
+                } catch (error) {
+                    localStorage.removeItem('geo_jwt_access');
+                    localStorage.removeItem('geo_jwt_refresh');
+                    localStorage.removeItem('geo_jwt_user');
+                    loginStatus.textContent = error.message;
+                    loginStatus.className = 'text-xs text-red-500';
+                    tokenPreview.textContent = JSON.stringify({ error: error.message }, null, 2);
+                }
+            }
+
+            function logoutJwt() {
+                localStorage.removeItem('geo_jwt_access');
+                localStorage.removeItem('geo_jwt_refresh');
+                localStorage.removeItem('geo_jwt_user');
+                window.location.href = '/';
+            }
 
             function addLog(endpoint, status, ms) {
                 const now = new Date();
@@ -418,7 +554,7 @@
                 quickResult.innerHTML = '<span class="text-xs text-[#a3a3a3]">consultando API…</span>';
                 const t0 = performance.now();
                 try {
-                    const res = await fetch(endpoint, { headers: { 'Accept': 'application/json' } });
+                    const res = await fetch(endpoint, { headers: { 'Accept': 'application/json', ...getAuthHeaders() } });
                     const ms = Math.round(performance.now() - t0);
                     const data = await res.json();
                     jsonResponse.innerText = JSON.stringify(data, null, 2);
@@ -458,44 +594,115 @@
                 mapMarkersLayer = L.layerGroup().addTo(mapInstance);
             }
 
+            function renderDirectionsOnMap(direcciones, statusLabel, lookup = empleadoLookup) {
+                if (!mapInstance || !mapMarkersLayer) {
+                    return;
+                }
+
+                mapMarkersLayer.clearLayers();
+                const points = [];
+
+                direcciones.forEach(dir => {
+                    const lat = Number.parseFloat(dir.latitud);
+                    const lon = Number.parseFloat(dir.longitud);
+                    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+                        return;
+                    }
+
+                    const empleadoRef = dir.empleado || 'empleado';
+                    const empleadoLabel = lookup[empleadoRef] || empleadoLookup[empleadoRef] || empleadoRef;
+                    const direccionCompleta = dir.direccion_completa ? `<br>${escapeHtml(dir.direccion_completa)}` : '';
+
+                    L.marker([lat, lon])
+                        .bindPopup(`<strong>${escapeHtml(empleadoLabel)}</strong><br>Lat: ${lat}<br>Lon: ${lon}${direccionCompleta}`)
+                        .addTo(mapMarkersLayer);
+
+                    points.push([lat, lon]);
+                });
+
+                if (points.length > 0) {
+                    mapInstance.fitBounds(L.latLngBounds(points), { padding: [30, 30] });
+                    mapStatus.textContent = statusLabel || `${points.length} punto(s) cargados`;
+                } else {
+                    mapInstance.setView([20, 0], 2);
+                    mapStatus.textContent = statusLabel || 'sin coordenadas válidas para mostrar';
+                }
+            }
+
             async function refreshMap() {
                 if (!mapInstance || !mapMarkersLayer) {
                     return;
                 }
                 mapStatus.textContent = 'actualizando mapa...';
                 try {
-                    const res = await fetch('/api-luis/direcciones/', { headers: { 'Accept': 'application/json' } });
+                    const res = await fetch('/api-luis/direcciones/', { headers: { 'Accept': 'application/json', ...getAuthHeaders() } });
                     const data = await res.json();
                     const direcciones = normalizeList(data);
-
-                    mapMarkersLayer.clearLayers();
-                    const points = [];
-
-                    direcciones.forEach(dir => {
-                        const lat = Number.parseFloat(dir.latitud);
-                        const lon = Number.parseFloat(dir.longitud);
-                        if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-                            return;
-                        }
-                        const empleadoRef = dir.empleado || 'empleado';
-                        const empleadoLabel = empleadoLookup[empleadoRef] || empleadoRef;
-
-                        L.marker([lat, lon])
-                            .bindPopup(`<strong>${escapeHtml(empleadoLabel)}</strong><br>Lat: ${lat}<br>Lon: ${lon}`)
-                            .addTo(mapMarkersLayer);
-
-                        points.push([lat, lon]);
-                    });
-
-                    if (points.length > 0) {
-                        mapInstance.fitBounds(L.latLngBounds(points), { padding: [30, 30] });
-                        mapStatus.textContent = `${points.length} punto(s) cargados`;
-                    } else {
-                        mapInstance.setView([20, 0], 2);
-                        mapStatus.textContent = 'sin coordenadas válidas para mostrar';
-                    }
+                    renderDirectionsOnMap(direcciones, `${direcciones.length} punto(s) cargados`);
                 } catch (e) {
                     mapStatus.textContent = `error de mapa: ${e.message}`;
+                }
+            }
+
+            async function runSmartSearch(query) {
+                jsonResponse.innerText = '{\n  "cargando_busqueda": true\n}';
+                quickResult.innerHTML = '<span class="text-xs text-[#a3a3a3]">buscando por texto…</span>';
+
+                const t0 = performance.now();
+                try {
+                    const [empRes, dirRes] = await Promise.all([
+                        fetch('/api-luis/empleados/', { headers: { 'Accept': 'application/json', ...getAuthHeaders() } }),
+                        fetch('/api-luis/direcciones/', { headers: { 'Accept': 'application/json', ...getAuthHeaders() } }),
+                    ]);
+
+                    const [empPayload, dirPayload] = await Promise.all([empRes.json(), dirRes.json()]);
+                    const empleados = normalizeList(empPayload);
+                    const direcciones = normalizeList(dirPayload);
+                    const q = query.toLowerCase();
+
+                    const localLookup = {};
+                    empleados.forEach(emp => {
+                        if (emp.url) {
+                            localLookup[emp.url] = `${emp.nombre_completo} · ${emp.puesto}`;
+                        }
+                    });
+
+                    const empleadosFiltrados = empleados.filter(emp => {
+                        const text = `${emp.nombre_completo || ''} ${emp.puesto || ''}`.toLowerCase();
+                        return text.includes(q);
+                    });
+
+                    const direccionesFiltradas = direcciones.filter(dir => {
+                        const empleadoTxt = (localLookup[dir.empleado] || empleadoLookup[dir.empleado] || '').toLowerCase();
+                        const latTxt = String(dir.latitud || '').toLowerCase();
+                        const lonTxt = String(dir.longitud || '').toLowerCase();
+                        const dirTxt = String(dir.direccion_completa || '').toLowerCase();
+                        return empleadoTxt.includes(q) || latTxt.includes(q) || lonTxt.includes(q) || dirTxt.includes(q);
+                    }).map(dir => ({
+                        ...dir,
+                        empleado_nombre: localLookup[dir.empleado] || empleadoLookup[dir.empleado] || dir.empleado || null,
+                    }));
+
+                    const resultado = {
+                        query,
+                        resumen: {
+                            empleados: empleadosFiltrados.length,
+                            direcciones: direccionesFiltradas.length,
+                        },
+                        empleados: empleadosFiltrados,
+                        direcciones: direccionesFiltradas,
+                    };
+
+                    const ms = Math.round(performance.now() - t0);
+                    jsonResponse.innerText = JSON.stringify(resultado, null, 2);
+                    addLog(`/search?q=${encodeURIComponent(query)}`, empRes.ok && dirRes.ok ? 200 : 'ERR', ms);
+                    quickResult.innerHTML = `<span class="text-xs text-[#6b6b6b]"><i class="fa-regular fa-circle-check mr-1 text-[#a3a3a3]"></i>${empleadosFiltrados.length} empleado(s) · ${direccionesFiltradas.length} dirección(es)</span>`;
+                    renderDirectionsOnMap(direccionesFiltradas, `${direccionesFiltradas.length} dirección(es) filtradas`, localLookup);
+                } catch (err) {
+                    const ms = Math.round(performance.now() - t0);
+                    jsonResponse.innerText = JSON.stringify({ error: err.message }, null, 2);
+                    quickResult.innerHTML = `<span class="text-xs text-red-400"><i class="fa-regular fa-circle-xmark mr-1"></i>error: ${err.message}</span>`;
+                    addLog(`/search?q=${encodeURIComponent(query)}`, 'ERR', ms);
                 }
             }
 
@@ -508,9 +715,24 @@
 
             // Búsqueda en el hero
             function performSearch() {
-                const query = geoInput.value.trim().toLowerCase();
-                const endpoint = ENDPOINTS[query] || ENDPOINTS['empleados'];
-                fetchEndpoint(endpoint);
+                const raw = geoInput.value.trim();
+                const query = raw.toLowerCase();
+
+                if (!raw) {
+                    fetchEndpoint(ENDPOINTS['empleados']);
+                    refreshMap();
+                    return;
+                }
+
+                if (ENDPOINTS[query]) {
+                    fetchEndpoint(ENDPOINTS[query]);
+                    if (query === 'direcciones') {
+                        refreshMap();
+                    }
+                    return;
+                }
+
+                runSmartSearch(raw);
             }
 
             geoSearchBtn.addEventListener('click', performSearch);
@@ -576,8 +798,13 @@
                 });
             });
 
-            // Carga inicial: consultar empleados al abrir la página
-            fetchEndpoint(ENDPOINTS['empleados']);
+            jwtLoginBtn.addEventListener('click', loginWithJwt);
+            jwtLogoutBtn.addEventListener('click', logoutJwt);
+            jwtPassword.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') loginWithJwt();
+            });
+
+            updateAuthUi();
 
             // ── CSRF helper ──────────────────────────────────────────────────────────────
             function getCsrfToken() {
@@ -593,6 +820,7 @@
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRFToken': getCsrfToken(),
+                        ...getAuthHeaders(),
                     },
                     body: JSON.stringify(payload),
                 });
@@ -605,7 +833,7 @@
             async function loadEmpleadosSelect() {
                 const sel = document.getElementById('dirEmpleado');
                 try {
-                    const res = await fetch('/api-luis/empleados/', { headers: { 'Accept': 'application/json' } });
+                    const res = await fetch('/api-luis/empleados/', { headers: { 'Accept': 'application/json', ...getAuthHeaders() } });
                     const lista = await res.json();
                     const arr = normalizeList(lista);
                     sel.innerHTML = '<option value="">— selecciona un empleado —</option>';
@@ -701,9 +929,6 @@
                 }
             });
 
-            // Cargar empleados y mapa al inicio
-            initMap();
-            loadEmpleadosSelect().then(() => refreshMap());
         })();
     </script>
 </body>

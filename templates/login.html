@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo API · Acceso</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-screen bg-[#0b0f14] text-white antialiased">
+    <header class="border-b border-white/10 px-6 py-5">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2 text-[#e5c39a]">
+                <i class="fa-regular fa-circle-dot"></i>
+                <span class="font-medium tracking-wide">geo/api</span>
+            </div>
+            <span class="text-xs text-slate-400">Acceso seguro</span>
+        </div>
+    </header>
+
+    <main class="min-h-[calc(100vh-72px)] flex items-center justify-center px-6">
+        <section class="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#11161d] p-8 shadow-2xl">
+            <p class="text-xs uppercase tracking-[0.3em] text-[#d7b58a]">Autenticación JWT</p>
+            <h1 class="mt-3 text-4xl font-light text-white">Inicio de sesión seguro</h1>
+            <p class="mt-3 text-slate-400">Primero autentícate. Después se mostrará el panel completo del proyecto.</p>
+
+            <div class="mt-8 grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+                <input id="jwtUsername" type="text" placeholder="usuario"
+                    class="rounded-lg border border-white/10 bg-[#0c1117] px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#d7b58a]">
+                <input id="jwtPassword" type="password" placeholder="contraseña"
+                    class="rounded-lg border border-white/10 bg-[#0c1117] px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-[#d7b58a]">
+                <button id="jwtLoginBtn" class="rounded-lg bg-[#2f3a46] px-5 py-3 text-white hover:bg-[#435160] transition-colors">
+                    iniciar sesión
+                </button>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between gap-3">
+                <p id="loginStatus" class="text-sm text-slate-400">sin sesión</p>
+                <button id="jwtLogoutBtn" class="rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-300 hover:bg-white/5 transition-colors">
+                    salir
+                </button>
+            </div>
+
+            <p id="jwtUser" class="mt-5 text-sm text-slate-300">No autenticado</p>
+            <pre id="tokenPreview" class="mt-3 rounded-lg border border-white/10 bg-[#0c1117] p-4 text-xs text-slate-400 whitespace-pre-wrap overflow-x-auto">Inicia sesión para acceder al panel.</pre>
+        </section>
+    </main>
+
+    <script>
+        (function () {
+            const jwtUsername = document.getElementById('jwtUsername');
+            const jwtPassword = document.getElementById('jwtPassword');
+            const jwtLoginBtn = document.getElementById('jwtLoginBtn');
+            const jwtLogoutBtn = document.getElementById('jwtLogoutBtn');
+            const loginStatus = document.getElementById('loginStatus');
+            const jwtUser = document.getElementById('jwtUser');
+            const tokenPreview = document.getElementById('tokenPreview');
+
+            function getCsrfToken() {
+                const match = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('csrftoken='));
+                return match ? decodeURIComponent(match.split('=')[1]) : '';
+            }
+
+            function getAccessToken() {
+                return localStorage.getItem('geo_jwt_access') || '';
+            }
+
+            function updateUi() {
+                const username = localStorage.getItem('geo_jwt_user');
+                const token = getAccessToken();
+
+                if (username && token) {
+                    loginStatus.textContent = 'sesión activa';
+                    loginStatus.className = 'text-sm text-green-400';
+                    jwtUser.textContent = `Usuario autenticado: ${username}`;
+                    tokenPreview.textContent = `${token.slice(0, 100)}...`;
+                } else {
+                    loginStatus.textContent = 'sin sesión';
+                    loginStatus.className = 'text-sm text-slate-400';
+                    jwtUser.textContent = 'No autenticado';
+                    tokenPreview.textContent = 'Inicia sesión para acceder al panel.';
+                }
+            }
+
+            async function loginWithJwt() {
+                const username = jwtUsername.value.trim();
+                const password = jwtPassword.value.trim();
+
+                if (!username || !password) {
+                    loginStatus.textContent = 'faltan credenciales';
+                    loginStatus.className = 'text-sm text-red-400';
+                    return;
+                }
+
+                loginStatus.textContent = 'autenticando...';
+                loginStatus.className = 'text-sm text-slate-400';
+
+                try {
+                    const res = await fetch('/api/jwt/login/', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRFToken': getCsrfToken(),
+                        },
+                        body: JSON.stringify({ username, password }),
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data.error || data.detail || `Error ${res.status}`);
+                    }
+
+                    localStorage.setItem('geo_jwt_access', data.access);
+                    localStorage.setItem('geo_jwt_refresh', data.refresh);
+                    localStorage.setItem('geo_jwt_user', data.username);
+                    updateUi();
+                    window.location.href = '/panel/';
+                } catch (error) {
+                    localStorage.removeItem('geo_jwt_access');
+                    localStorage.removeItem('geo_jwt_refresh');
+                    localStorage.removeItem('geo_jwt_user');
+                    loginStatus.textContent = error.message;
+                    loginStatus.className = 'text-sm text-red-400';
+                    tokenPreview.textContent = JSON.stringify({ error: error.message }, null, 2);
+                }
+            }
+
+            function logoutJwt() {
+                localStorage.removeItem('geo_jwt_access');
+                localStorage.removeItem('geo_jwt_refresh');
+                localStorage.removeItem('geo_jwt_user');
+                updateUi();
+            }
+
+            jwtLoginBtn.addEventListener('click', loginWithJwt);
+            jwtLogoutBtn.addEventListener('click', logoutJwt);
+            jwtPassword.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') loginWithJwt();
+            });
+
+            updateUi();
+        })();
+    </script>
+</body>
+</html>

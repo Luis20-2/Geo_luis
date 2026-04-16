@@ -5,4 +5,4 @@ from rest_framework import serializers
 class DireccionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Direccion
-        fields = ['empleado', 'latitud', 'longitud']
+        fields = ['url', 'empleado', 'latitud', 'longitud', 'direccion_completa']
