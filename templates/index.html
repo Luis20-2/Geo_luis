@@ -68,7 +68,7 @@
     <header class="border-b border-[#efefef] py-5 px-6 md:px-10">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <i class="fa-regular fa-circle-dot text-xl text-[#6b6b6b]"></i>
+                <i class="fa-solid fa-globe text-xl text-[#6b6b6b]"></i>
                 <span class="text-sm font-medium tracking-wide text-[#4a4a4a]">geo<span class="font-light">/api</span></span>
             </div>
             
@@ -82,12 +82,11 @@
             </nav>
             
             <div class="flex items-center gap-4">
-                <button class="text-sm text-[#6b6b6b] hover:text-[#2b2b2b] transition-colors hidden sm:block">acceso</button>
-                <button class="bg-[#2b2b2b] text-white text-sm px-4 py-2 rounded-md hover:bg-[#404040] transition-colors">
-                    registro
+                <button id="headerLogoutBtn" class="bg-[#2b2b2b] text-white text-sm px-4 py-2 rounded-md hover:bg-[#404040] transition-colors">
+                    <i class="fa-solid fa-right-from-bracket mr-2"></i>cerrar sesión
                 </button>
                 <button class="md:hidden text-xl text-[#6b6b6b]" id="menuBtn">
-                    <i class="fa-regular fa-bars"></i>
+                    <i class="fa-solid fa-bars"></i>
                 </button>
             </div>
         </div>
@@ -122,12 +121,12 @@
                     <div class="flex items-center border border-[#e5e5e5] rounded-md overflow-hidden bg-white">
                         <input type="text" placeholder="Ej: empleados, direcciones, jose, RH" class="flex-1 px-5 py-3 text-sm focus:outline-none" id="geoInput">
                         <button class="px-5 py-3 bg-[#f5f5f5] text-[#6b6b6b] hover:text-[#2b2b2b] border-l border-[#e5e5e5] transition-colors" id="geoSearchBtn">
-                            <i class="fa-regular fa-magnifying-glass"></i>
+                            <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
                     </div>
                     <div class="text-xs text-[#a3a3a3] mt-3 flex items-center justify-center gap-4">
-                        <span><i class="fa-regular fa-location-dot mr-1"></i> /api-luis/</span>
-                        <span><i class="fa-regular fa-building mr-1"></i> 2 recursos activos</span>
+                        <span><i class="fa-solid fa-link mr-1"></i> /api-luis/</span>
+                        <span><i class="fa-solid fa-database mr-1"></i> 2 recursos activos</span>
                     </div>
                 </div>
             </div>
@@ -183,7 +182,7 @@
     <section id="playground" class="py-16 px-6 bg-[#fafafa] border-y border-[#efefef]">
         <div class="max-w-7xl mx-auto">
             <div class="flex items-center gap-2 mb-8">
-                <i class="fa-regular fa-terminal text-sm text-[#a3a3a3]"></i>
+                <i class="fa-solid fa-terminal text-sm text-[#a3a3a3]"></i>
                 <span class="text-xs uppercase tracking-wider text-[#a3a3a3]">playground · respuesta en vivo</span>
             </div>
             
@@ -210,10 +209,10 @@
                     
                     <div class="flex gap-3">
                         <button class="bg-[#2b2b2b] text-white px-5 py-3 text-sm rounded-md hover:bg-[#404040] transition-colors flex-1" id="executeBtn">
-                            <i class="fa-regular fa-play mr-2"></i>ejecutar
+                            <i class="fa-solid fa-play mr-2"></i>ejecutar
                         </button>
                         <button class="border border-[#e5e5e5] px-4 py-3 text-sm rounded-md hover:bg-[#f5f5f5] transition-colors" id="clearBtn">
-                            <i class="fa-regular fa-rotate-right"></i>
+                            <i class="fa-solid fa-rotate-right"></i>
                         </button>
                     </div>
                 </div>
@@ -246,13 +245,13 @@
             
             <div class="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
                 <a href="#crear-empleado" class="geo-card p-6 rounded-md block">
-                    <i class="fa-regular fa-user text-xl text-[#6b6b6b] mb-4"></i>
+                    <i class="fa-solid fa-users text-xl text-[#6b6b6b] mb-4"></i>
                     <h3 class="font-medium mb-2 text-[#2b2b2b]">empleados</h3>
                     <p class="text-xs text-[#6b6b6b] leading-relaxed">Lista, crea y gestiona empleados con nombre completo y puesto.</p>
                     <span class="text-xs text-[#a3a3a3] block mt-4 font-mono">/api-luis/empleados/</span>
                 </a>
                 <a href="#crear-direccion" class="geo-card p-6 rounded-md block">
-                    <i class="fa-regular fa-map-location-dot text-xl text-[#6b6b6b] mb-4"></i>
+                    <i class="fa-solid fa-map-location-dot text-xl text-[#6b6b6b] mb-4"></i>
                     <h3 class="font-medium mb-2 text-[#2b2b2b]">direcciones</h3>
                     <p class="text-xs text-[#6b6b6b] leading-relaxed">Registra coordenadas de empleados con geocodificación inversa automática.</p>
                     <span class="text-xs text-[#a3a3a3] block mt-4 font-mono">/api-luis/direcciones/</span>
@@ -265,7 +264,7 @@
     <section id="crear-empleado" class="py-16 px-6 bg-[#fafafa] border-y border-[#efefef]">
         <div class="max-w-5xl mx-auto">
             <div class="flex items-center gap-2 mb-8">
-                <i class="fa-regular fa-user-plus text-sm text-[#a3a3a3]"></i>
+                <i class="fa-solid fa-user-plus text-sm text-[#a3a3a3]"></i>
                 <span class="text-xs uppercase tracking-wider text-[#a3a3a3]">nuevo empleado · POST /api-luis/empleados/</span>
             </div>
 
@@ -285,7 +284,7 @@
                     <div class="flex items-center gap-4">
                         <button id="crearEmpleadoBtn"
                             class="bg-[#2b2b2b] text-white px-5 py-3 text-sm rounded-md hover:bg-[#404040] transition-colors">
-                            <i class="fa-regular fa-plus mr-2"></i>crear empleado
+                            <i class="fa-solid fa-plus mr-2"></i>crear empleado
                         </button>
                         <span id="empFeedback" class="text-xs"></span>
                     </div>
@@ -303,7 +302,7 @@
     <section id="crear-direccion" class="py-16 px-6">
         <div class="max-w-5xl mx-auto">
             <div class="flex items-center gap-2 mb-8">
-                <i class="fa-regular fa-location-dot text-sm text-[#a3a3a3]"></i>
+                <i class="fa-solid fa-location-dot text-sm text-[#a3a3a3]"></i>
                 <span class="text-xs uppercase tracking-wider text-[#a3a3a3]">nueva dirección · POST /api-luis/direcciones/</span>
             </div>
 
@@ -319,7 +318,7 @@
                             </select>
                             <button id="refreshEmpleadosBtn" title="Recargar empleados"
                                 class="px-3 border border-[#e5e5e5] rounded-md hover:bg-[#f5f5f5] transition-colors text-[#a3a3a3] hover:text-[#2b2b2b]">
-                                <i class="fa-regular fa-rotate-right text-xs"></i>
+                                <i class="fa-solid fa-rotate-right text-xs"></i>
                             </button>
                         </div>
                     </div>
@@ -336,7 +335,7 @@
                     <div class="flex items-center gap-4">
                         <button id="crearDireccionBtn"
                             class="bg-[#2b2b2b] text-white px-5 py-3 text-sm rounded-md hover:bg-[#404040] transition-colors">
-                            <i class="fa-regular fa-plus mr-2"></i>crear dirección
+                            <i class="fa-solid fa-plus mr-2"></i>crear dirección
                         </button>
                         <span id="dirFeedback" class="text-xs"></span>
                     </div>
@@ -355,7 +354,7 @@
         <div class="max-w-5xl mx-auto">
             <div class="border border-[#efefef] rounded-md overflow-hidden bg-white">
                 <div class="p-4 border-b border-[#efefef] flex items-center justify-between text-xs text-[#a3a3a3]">
-                    <span><i class="fa-regular fa-map mr-2"></i>vista de mapa · direcciones reales</span>
+                    <span><i class="fa-solid fa-map mr-2"></i>vista de mapa · direcciones reales</span>
                     <span class="flex items-center gap-3">
                         <span class="flex items-center gap-1"><span class="dot-pulse"></span> activo</span>
                         <span class="w-px h-3 bg-[#efefef]"></span>
@@ -375,7 +374,7 @@
         <div class="max-w-5xl mx-auto">
             <div class="border border-[#efefef] rounded-md bg-[#fafafa]">
                 <div class="p-4 border-b border-[#efefef] flex items-center justify-between">
-                    <span class="text-xs text-[#a3a3a3]"><i class="fa-regular fa-terminal mr-2"></i>últimas consultas</span>
+                    <span class="text-xs text-[#a3a3a3]"><i class="fa-solid fa-terminal mr-2"></i>últimas consultas</span>
                     <span class="text-xs text-[#a3a3a3]">tiempo real · streaming</span>
                 </div>
                 <div class="p-4 font-mono text-xs space-y-2" id="logContainer">
@@ -425,6 +424,7 @@
             const clearLogs = document.getElementById('clearLogs');
             const refreshMapBtn = document.getElementById('refreshMapBtn');
             const mapStatus = document.getElementById('mapStatus');
+            const headerLogoutBtn = document.getElementById('headerLogoutBtn');
             const jwtUsername = document.getElementById('jwtUsername');
             const jwtPassword = document.getElementById('jwtPassword');
             const jwtLoginBtn = document.getElementById('jwtLoginBtn');
@@ -560,11 +560,11 @@
                     jsonResponse.innerText = JSON.stringify(data, null, 2);
                     addLog(endpoint, res.status, ms);
                     const count = Array.isArray(data) ? data.length : (data.count !== undefined ? data.count : '—');
-                    quickResult.innerHTML = `<span class="text-xs text-[#6b6b6b]"><i class="fa-regular fa-circle-check mr-1 text-[#a3a3a3]"></i>estado: ${res.status} · ${count} registro(s)</span>`;
+                    quickResult.innerHTML = `<span class="text-xs text-[#6b6b6b]"><i class="fa-solid fa-circle-check mr-1 text-[#a3a3a3]"></i>estado: ${res.status} · ${count} registro(s)</span>`;
                 } catch (err) {
                     const ms = Math.round(performance.now() - t0);
                     jsonResponse.innerText = JSON.stringify({ error: err.message }, null, 2);
-                    quickResult.innerHTML = `<span class="text-xs text-red-400"><i class="fa-regular fa-circle-xmark mr-1"></i>error: ${err.message}</span>`;
+                    quickResult.innerHTML = `<span class="text-xs text-red-400"><i class="fa-solid fa-circle-xmark mr-1"></i>error: ${err.message}</span>`;
                     addLog(endpoint, 'ERR', ms);
                 }
             }
@@ -696,12 +696,12 @@
                     const ms = Math.round(performance.now() - t0);
                     jsonResponse.innerText = JSON.stringify(resultado, null, 2);
                     addLog(`/search?q=${encodeURIComponent(query)}`, empRes.ok && dirRes.ok ? 200 : 'ERR', ms);
-                    quickResult.innerHTML = `<span class="text-xs text-[#6b6b6b]"><i class="fa-regular fa-circle-check mr-1 text-[#a3a3a3]"></i>${empleadosFiltrados.length} empleado(s) · ${direccionesFiltradas.length} dirección(es)</span>`;
+                    quickResult.innerHTML = `<span class="text-xs text-[#6b6b6b]"><i class="fa-solid fa-circle-check mr-1 text-[#a3a3a3]"></i>${empleadosFiltrados.length} empleado(s) · ${direccionesFiltradas.length} dirección(es)</span>`;
                     renderDirectionsOnMap(direccionesFiltradas, `${direccionesFiltradas.length} dirección(es) filtradas`, localLookup);
                 } catch (err) {
                     const ms = Math.round(performance.now() - t0);
                     jsonResponse.innerText = JSON.stringify({ error: err.message }, null, 2);
-                    quickResult.innerHTML = `<span class="text-xs text-red-400"><i class="fa-regular fa-circle-xmark mr-1"></i>error: ${err.message}</span>`;
+                    quickResult.innerHTML = `<span class="text-xs text-red-400"><i class="fa-solid fa-circle-xmark mr-1"></i>error: ${err.message}</span>`;
                     addLog(`/search?q=${encodeURIComponent(query)}`, 'ERR', ms);
                 }
             }
@@ -769,7 +769,7 @@
             copyBtn.addEventListener('click', () => {
                 navigator.clipboard?.writeText(jsonResponse.innerText).then(() => {
                     const originalHtml = copyBtn.innerHTML;
-                    copyBtn.innerHTML = '<i class="fa-regular fa-check"></i>';
+                    copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
                     setTimeout(() => { copyBtn.innerHTML = originalHtml; }, 1000);
                 });
             });
@@ -800,6 +800,7 @@
 
             jwtLoginBtn.addEventListener('click', loginWithJwt);
             jwtLogoutBtn.addEventListener('click', logoutJwt);
+            headerLogoutBtn?.addEventListener('click', logoutJwt);
             jwtPassword.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') loginWithJwt();
             });
